@@ -10,14 +10,15 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Variáveis globais (disponíveis apenas dentro deste módulo)
         let db;
         let auth;
         let userId;
         const FLIGHT_CODE = 'LA8202';
+        // Regra de armazenamento: /artifacts/{appId}/public/data/{your_collection_name}/{documentId}
         const flightDocRef = (db, appId) => doc(db, `artifacts/${appId}/public/data/flight_status`, FLIGHT_CODE);
 
         // Configurações e Inicialização
@@ -28,9 +29,9 @@
         // Função principal de inicialização
         async function initFirebase() {
             try {
+                // Se a configuração do Firebase estiver faltando, usa dados mockados e encerra
                 if (!firebaseConfig) {
                     console.error("Firebase configuration is missing.");
-                    // Define dados mockados se o Firebase não estiver configurado
                     updateDOM(MOCK_INITIAL_DATA); 
                     return;
                 }
@@ -82,7 +83,7 @@
             statusIndex: 0, 
             statusMap: ["DEPARTING ON TIME", "DEPARTED", "IN FLIGHT", "LANDED"],
             progressMap: [0.0, 0.05, 0.5, 1.0], // Posição do avião no mapa (0.0 a 1.0)
-            statusColorMap: ["bg-green-700/80", "bg-blue-700/80", "bg-yellow-600/80", "bg-gray-600/80"],
+            statusColorMap: ["bg-green-600", "bg-blue-600", "bg-yellow-600", "bg-gray-600"],
         };
 
         // Função para garantir que o documento existe e é inicializado
@@ -109,7 +110,9 @@
             // 2. Badge de Status
             const statusBadge = document.getElementById('flight-status-badge');
             statusBadge.textContent = statusText;
-            statusBadge.className = `inline-block px-2 py-0.5 text-xs font-semibold rounded-full text-white tracking-widest ${statusClass}`;
+            // Usa o novo verde vibrante da classe customizada 'status-on-time-bg'
+            const currentStatusClass = data.statusIndex === 0 ? 'bg-status-on-time-bg' : statusClass; 
+            statusBadge.className = `inline-block px-2 py-0.5 text-xs font-semibold rounded-full text-white tracking-widest ${currentStatusClass}`;
 
             // 3. Rota
             document.getElementById('origin-code').textContent = data.originCode;
@@ -121,7 +124,6 @@
             document.getElementById('arrival-time').textContent = data.arrivalTime;
             document.getElementById('origin-terminal').textContent = data.originTerminal;
             document.getElementById('origin-gate').textContent = data.originGate;
-            // No design, a data de partida/chegada está repetida, então usamos só a data de partida para ambas
             document.getElementById('origin-date').textContent = `${data.originCity} • ${data.departureDate}`;
             document.getElementById('destination-date').textContent = `${data.destinationCity} • ${data.departureDate}`;
 
@@ -130,9 +132,7 @@
             
             // 6. Atualizar Posição do Avião
             const planeIcon = document.getElementById('plane-icon-wrapper');
-            // Mapeia o progresso (0.0 a 1.0) para uma posição horizontal (0% a 100% menos o tamanho do ícone)
             const position = progress * 100;
-            // O avião se move ao longo da linha entre GRU (left: 10%) e LIM (right: 90%)
             planeIcon.style.left = `${Math.min(95, Math.max(5, position))}%`; 
             
             // Atualiza a barra de progresso visual
@@ -166,13 +166,14 @@
             theme: {
                 extend: {
                     colors: {
-                        // Cores do novo design (mais escuras)
-                        'dark-bg': '#1C1C1E', // Fundo principal
-                        'card-bg': '#000000', // Fundo do cartão (preto total para contraste)
-                        'text-primary': '#FFFFFF', // Texto principal
-                        'text-secondary': '#8D8D92', // Texto secundário (cinza claro)
-                        'status-green': '#34C759', // Cor verde para "07:30"
-                        'line-color': '#555555', // Cinza para a linha da rota
+                        // Cores atualizadas
+                        'dark-bg': '#1C1C1E', 
+                        'card-bg': '#2C2C2E', // Fundo mais claro, como o do Notion no dark mode
+                        'text-primary': '#FFFFFF',
+                        'text-secondary': '#8D8D92', 
+                        'status-on-time-text': '#34C759', // Novo verde vibrante para texto e ícones
+                        'status-on-time-bg': '#10522B', // Fundo escuro sutil para a badge de status
+                        'line-color': '#555555', 
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -186,7 +187,6 @@
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
-            /* Garante que o widget não fique fixo na tela para embed no Notion/GitHub */
             min-height: auto; 
             padding: 0;
             background-color: #1C1C1E;
@@ -212,10 +212,10 @@
 <body class="flex items-center justify-center p-4">
 
     <!-- Cartão de Pré-visualização de Voo (Máximo 400px de largura para parecer um widget) -->
-    <div id="flight-card" class="bg-card-bg text-text-primary rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-[#2c2c2e]">
+    <div id="flight-card" class="bg-card-bg text-text-primary rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-[#3C3C3E]">
         
         <!-- 1. Título e Subtítulo -->
-        <div class="p-4 flex flex-col border-b border-gray-800">
+        <div class="p-4 flex flex-col border-b border-gray-700">
             <div class="flex justify-between items-center mb-1">
                 <h1 id="flight-title" class="text-xl font-bold">LATAM LA 8202</h1>
                 <div class="text-text-secondary cursor-pointer">
@@ -229,7 +229,7 @@
         </div>
 
         <!-- 2. Detalhes de Status e Tempo -->
-        <div class="p-4 border-b border-gray-800 space-y-3">
+        <div class="p-4 border-b border-gray-700 space-y-3">
             <div class="flex items-end justify-between text-xs text-text-secondary">
                 <!-- Apenas mock para as abas de data -->
                 <span class="font-normal">Sun, Nov 23</span>
@@ -244,7 +244,8 @@
 
                 <div class="flex items-center space-x-2 text-sm">
                     <span class="text-text-secondary">to Lima <span class="font-bold">LIM</span></span>
-                    <span id="flight-status-badge" class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full text-white tracking-widest bg-green-700/80">DEPARTING ON TIME</span>
+                    <!-- Badge de Status com cor de fundo customizada (status-on-time-bg) -->
+                    <span id="flight-status-badge" class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full text-white tracking-widest bg-status-on-time-bg">DEPARTING ON TIME</span>
                     <div class="text-text-secondary cursor-pointer">
                         <!-- Ícone de seta para cima para simular expansão -->
                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -265,6 +266,7 @@
 
             <!-- Linha de Rota -->
             <div class="route-line"></div>
+            <!-- Progress Path (cor da linha de fundo) -->
             <div id="flight-path-progress" class="absolute top-1/2 -mt-px h-0.5 bg-line-color transition-all duration-1000 ease-in-out" style="width: 0;"></div>
 
 
@@ -274,9 +276,9 @@
                 <p class="text-xs text-text-secondary mt-1">Airport info</p>
             </div>
             
-            <!-- Ícone do Avião (Posição dinâmica) -->
+            <!-- Ícone do Avião (Posição dinâmica, cor do novo verde) -->
              <div id="plane-icon-wrapper" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-1000 ease-in-out" style="left: 5%;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90 text-status-green drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90 text-status-on-time-text drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
             </div>
@@ -289,7 +291,7 @@
         </div>
 
         <!-- 4. Tabela de Detalhes -->
-        <div class="p-4 pt-0 border-b border-gray-800">
+        <div class="p-4 pt-0 border-b border-gray-700">
             <div class="grid grid-cols-2 gap-4">
                 <!-- Coluna da Partida (GRU) -->
                 <div>
@@ -300,7 +302,8 @@
                         <span class="text-text-secondary">Gate</span>
                     </div>
                     <div class="grid grid-cols-3 gap-1 mt-1 text-base font-bold">
-                        <span id="departure-time" class="text-status-green">07:30</span>
+                        <!-- Horário com o novo verde vibrante -->
+                        <span id="departure-time" class="text-status-on-time-text">07:30</span>
                         <span id="origin-terminal" class="text-text-primary">3</span>
                         <span id="origin-gate" class="text-text-primary">-</span>
                     </div>
@@ -315,7 +318,8 @@
                         <span class="text-text-secondary">Gate</span>
                     </div>
                     <div class="grid grid-cols-3 gap-1 mt-1 text-base font-bold">
-                        <span id="arrival-time" class="text-status-green">10:30</span>
+                         <!-- Horário com o novo verde vibrante -->
+                        <span id="arrival-time" class="text-status-on-time-text">10:30</span>
                         <span id="destination-terminal" class="text-text-primary">-</span>
                         <span id="destination-gate" class="text-text-primary">-</span>
                     </div>
@@ -329,7 +333,7 @@
                 Updated <span id="updated-time">6h 38m ago</span>
             </span>
             <div class="flex items-center space-x-2">
-                <span class="text-sm">Source: <a href="#" class="text-blue-500 hover:underline">OAG</a></span>
+                <span class="text-sm">Source: <a href="#" class="text-blue-400 hover:underline">OAG</a></span>
                 <!-- Ícone de compartilhamento -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 cursor-pointer">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75v-2.25M15.75 9l-3 3m0 0-3-3m3 3V1.5" />
@@ -338,7 +342,7 @@
         </div>
 
         <!-- Linha de Fundo do Rodapé -->
-        <div class="p-2 text-center text-xs text-text-secondary border-t border-gray-800">
+        <div class="p-2 text-center text-xs text-text-secondary border-t border-gray-700">
             Showing local airport times
         </div>
 
