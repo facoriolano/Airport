@@ -56,18 +56,18 @@
         // CORREÇÃO: Dados reais manuais para quando a API falhar
         function generateFallbackData(code) {
             // Se for o voo específico LA8202, retorna os dados corretos de GRU->LIM
-            if (code === 'LA8202') {
+            if (code === 'LA8098') {
                 return {
                     airline: "LATAM Airlines",
-                    flightNumber: "LA8202",
+                    flightNumber: "LA8098",
                     originCity: "São Paulo",
                     originCode: "GRU",
                     destinationCity: "Lima",
                     destinationCode: "LIM",
-                    departureTime: "07:30",
+                    departureTime: "07:35",
                     arrivalTime: "10:30",
-                    departureDate: "Tue, Nov 25",
-                    duration: "5h 00m",
+                    departureDate: "Wed, Nov 26",
+                    duration: "4h 55m",
                     isFallback: true 
                 };
             }
